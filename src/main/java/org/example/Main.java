@@ -1,21 +1,18 @@
 package org.example;
 
-
-import org.example.db.Constants;
 import org.example.db.Constants.AccountType;
+import org.example.db.DBConnection;
 import org.example.db.user.Account;
 import org.example.db.user.User;
 import org.example.db.user.UserRepo;
 import org.example.service.ThreadPoolSizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.math.BigDecimal;
 import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 
 public class Main {
     private static final Scanner scanner = new Scanner(System.in);
@@ -27,6 +24,7 @@ public class Main {
 
     public static void main(String[] args) {
         LOGGER.info("No of threads in the pool are {}", noOfThreads);
+        DBConnection.initDBConnection();
         mainMenu();
         closeService();
     }
@@ -81,10 +79,8 @@ public class Main {
     }
 
     private static void createUser() {
-
         scanner.nextLine();
         System.out.println("Creating user....");
-
         System.out.println("Enter name: ");
         String name = scanner.nextLine();
         System.out.println("Enter email: ");
@@ -100,7 +96,6 @@ public class Main {
     private static void simulateUsers(int count) {
         CountDownLatch latch = new CountDownLatch(count);
         long start = System.nanoTime();
-
         for (int i = 0; i < count; i++) {
             int id = i;
             executorService.submit(() -> {
@@ -126,5 +121,4 @@ public class Main {
         System.out.printf("Average latency = %.3f ms/request%n", (elapsedSec * 1000) / count);
         System.out.printf("Throughput = %.2f requests/sec%n", count / elapsedSec);
     }
-
 }

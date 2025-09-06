@@ -1,7 +1,6 @@
 package org.example.db.user;
 
 import org.example.db.BaseRepository;
-import org.example.db.DBConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,13 +17,11 @@ public class UserRepo extends BaseRepository {
 
             long startService = System.nanoTime();
 
-            // CPU: setting params
             stmt.setString(1, user.name());
             stmt.setString(2, user.email());
 
             long beforeDb = System.nanoTime();
 
-            // IO: DB call (wait time)
             int res = stmt.executeUpdate();
 
             long afterDb = System.nanoTime();
@@ -53,7 +50,6 @@ public class UserRepo extends BaseRepository {
 
             long startService = System.nanoTime();
 
-            // CPU: setting params
             stmt.setInt(1, account.userId());
             stmt.setString(2, account.accountNumber());
             stmt.setObject(3, account.balance());
@@ -62,7 +58,6 @@ public class UserRepo extends BaseRepository {
 
             long beforeDb = System.nanoTime();
 
-            // IO: DB call (wait time)
             int res = stmt.executeUpdate();
 
             long afterDb = System.nanoTime();

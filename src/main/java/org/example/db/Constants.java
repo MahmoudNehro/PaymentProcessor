@@ -18,4 +18,8 @@ public class Constants {
     public enum AccountType {
         WALLET, CARD, BANK;
     }
+
+    public static final String KEY_JDBC_URL = "JDBC_URL";
+    public static final String KEY_JDBC_USER_NAME = "db_user_name";
+    public static final String KEY_JDBC_PASSWORD = "db_password";
 }
