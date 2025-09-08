@@ -1,12 +1,10 @@
 package org.example.db;
 
-import org.example.db.user.User;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class BaseRepository {

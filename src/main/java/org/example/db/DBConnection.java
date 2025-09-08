@@ -3,6 +3,8 @@ package org.example.db;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
+import java.sql.SQLException;
+
 import static org.example.db.Constants.*;
 
 public class DBConnection {
@@ -18,6 +20,21 @@ public class DBConnection {
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
         config.setMaximumPoolSize(10);
         dataSource = new HikariDataSource(config);
+    }
+
+    public static void closeConnection() {
+        if (!dataSource.isClosed()) {
+            if (dataSource != null) {
+                try {
+                    dataSource.getConnection().close();
+                    dataSource.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                } finally {
+                    dataSource = null;
+                }
+            }
+        }
     }
 
     public static HikariDataSource getDataSource() {

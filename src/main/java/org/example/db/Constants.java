@@ -19,6 +19,14 @@ public class Constants {
         WALLET, CARD, BANK;
     }
 
+    public enum PaymentStatus {
+        PENDING, SUCCESS, FAILED, CANCELLED;
+    }
+
+    public enum TransactionType {
+        DEBIT, CREDIT;
+    }
+
     public static final String KEY_JDBC_URL = "JDBC_URL";
     public static final String KEY_JDBC_USER_NAME = "db_user_name";
     public static final String KEY_JDBC_PASSWORD = "db_password";

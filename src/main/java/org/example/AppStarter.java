@@ -1,27 +1,31 @@
 package org.example;
 
+import org.example.db.Constants.TransactionType;
 import org.example.db.Constants.AccountType;
 import org.example.db.DBConnection;
+import org.example.db.transactions.Transaction;
 import org.example.db.user.Account;
 import org.example.db.user.User;
 import org.example.db.user.UserRepo;
+import org.example.service.PaymentProcessor;
 import org.example.service.ThreadPoolSizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.math.BigDecimal;
 import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class Main {
+public class AppStarter {
     private static final Scanner scanner = new Scanner(System.in);
-    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(AppStarter.class.getName());
     private static final long avgWaitTimeNs = 40_000_000;
     private static final long avgServiceTimeNs = 1_000_000;
     private static final int noOfThreads = ThreadPoolSizer.calculateOptimalThreads(avgWaitTimeNs, avgServiceTimeNs);
     private static final ExecutorService executorService = Executors.newFixedThreadPool(noOfThreads);
-
+    private static final PaymentProcessor paymentProcessor = PaymentProcessor.getInstance();
     public static void main(String[] args) {
         LOGGER.info("No of threads in the pool are {}", noOfThreads);
         DBConnection.initDBConnection();
@@ -32,7 +36,9 @@ public class Main {
     private static void closeService() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.info("Shutting down thread pool...");
+            LOGGER.info("Shutting down database pool...");
             executorService.shutdown();
+            DBConnection.closeConnection();
         }));
     }
 
@@ -44,6 +50,8 @@ public class Main {
         System.out.println("1- Create user");
         System.out.println("2- Simulate creating many users");
         System.out.println("3- Create account for the user");
+        System.out.println("4- Make transaction");
+        System.out.println("5- Simulate transaction");
         do {
             userChoice = scanner.nextInt();
             switch (userChoice) {
@@ -52,8 +60,40 @@ public class Main {
                 case 1 -> createUser();
                 case 2 -> simulateUsers(10000);
                 case 3 -> createAccount();
+                case 4 -> makeTransaction();
+                case 5 -> simulateTransaction();
             }
         } while (true);
+    }
+
+    private static void simulateTransaction() {
+        Transaction transaction1 = new Transaction("123", new BigDecimal("500.0"), "USD", TransactionType.CREDIT);
+        Transaction transaction2 = new Transaction("123", new BigDecimal("100.0"), "USD", TransactionType.DEBIT);
+        Transaction transaction3 = new Transaction("123", new BigDecimal("200.0"), "USD", TransactionType.CREDIT);
+        Transaction transaction4 = new Transaction("123", new BigDecimal("10.0"), "USD", TransactionType.DEBIT);
+        paymentProcessor.makeTransaction(transaction1);
+        paymentProcessor.makeTransaction(transaction2);
+        paymentProcessor.makeTransaction(transaction3);
+        paymentProcessor.makeTransaction(transaction4);
+
+    }
+
+    private static void makeTransaction() {
+        scanner.nextLine();
+        System.out.println("Creating transaction....");
+        System.out.println("Enter your account number: ");
+        String accountNumber = scanner.nextLine();
+        System.out.println("Enter amount: ");
+        BigDecimal amount = BigDecimal.valueOf(scanner.nextDouble());
+        scanner.nextLine();
+        System.out.println("Enter currency: ");
+        String currency = scanner.nextLine();
+        System.out.println("Enter your transaction type: (DEBIT/CREDIT): ");
+        TransactionType transactionType = TransactionType.valueOf(scanner.nextLine());
+
+        Transaction transaction = new Transaction(accountNumber, amount, currency, transactionType);
+        paymentProcessor.makeTransaction(transaction);
+
     }
 
     private static void createAccount() {
@@ -71,7 +111,7 @@ public class Main {
         String currency = scanner.nextLine();
         System.out.println("Enter account type: ");
         AccountType accountType = AccountType.valueOf(scanner.nextLine());
-        Account account = new Account(userId,accountNumber,balance,currency, accountType);
+        Account account = new Account(userId, accountNumber, balance, currency, accountType);
         executorService.submit(() -> {
             LOGGER.info("Creating account on thread {}", Thread.currentThread().getName());
             new UserRepo().createAccount(account);
@@ -101,12 +141,14 @@ public class Main {
             executorService.submit(() -> {
                 try {
                     User user = new User("User" + id, "user" + id + "@test.com");
+                    LOGGER.info("Creating user on thread {}", Thread.currentThread().getName());
                     new UserRepo().createUser(user);
                 } finally {
                     latch.countDown();
                 }
             });
         }
+
         try {
             latch.await();
         } catch (InterruptedException e) {
